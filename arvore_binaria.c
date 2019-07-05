@@ -2,14 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-//Criando a Struct Nó
-typedef struct str_no {
-	char dado;
-	int esquerda;
-	int direita;
-	int pai;
-} str_no;
+//Criando a Struct nó (apenas remover os ponteiros)
+typedef struct NO {
+	int dado;
+	struct NO *esq;
+	struct NO *dir;
+	struct NO *pai;
+} NO;
 
 //Definindo Constantes
 #define tamanho 8
@@ -17,114 +16,106 @@ typedef struct str_no {
 #define D 1
 #define R -1
 
-//Criando as variáveis
-struct str_no arvore[tamanho];
-int lado,indice=0; //indice é a posição no vetor
-int opt=-1;
-char pai, no;
+//Criando as Variáveis
+typedef struct ARVORE{
+	NO *raiz;
+}ARVORE;
 
-//Prototipação das Funções
-void arvore_insere(int pai, char dado, int lado);
-int arvore_procura(char dado);
-void menu_mostrar(void);
+//Declara��o da �rvore
+ARVORE a;
 
-//Procura nó
-int arvore_procura(char dado){
-	int i;
-	if (indice != 0){
-		for (i = 0; i<indice; i++){
-			if (arvore[i].dado == dado) {
-				return (i);
+//Prot�tipos das fun��es
+void inicializaArvore(ARVORE arv);
+void inicializaNo(NO* n, int val); //Esta função é utilizada apenas para a alocação de memória
+void insereNoArvoreOrdenada(int valor); //Equivale ao arvore_insere
+void emOrdem(NO* raiz);
+
+
+//Fun��o que sempre deve ser chamada ao se criar uma nova �rvore
+void inicializaArvore(ARVORE arv)
+{
+	arv.raiz = NULL;
+}
+
+//Fun��o utilizada para inicializar um novo n� na �rvore
+void inicializaNo(NO* n, int val){
+	if(!n)
+	{
+		printf("Falha de alocacao.\n");
+		return;
+	}
+	n->pai = NULL;
+	n->esq = NULL;
+	n->dir = NULL;
+	n->dado = val;
+}
+
+//Regra para inserção ordenada
+//Valores menores ou iguais v�o � esquerda
+//Valores maiores v�o � direita
+void insereNoArvoreOrdenada(int valor)
+{
+	NO* corrente = a.raiz;
+	NO* pai;
+
+	NO* novoNo = (NO*) malloc(sizeof(NO));
+	inicializaNo(novoNo, valor);
+	printf("Inserindo no %d. \n", novoNo->dado);
+	
+	if(corrente == NULL)
+	{
+		a.raiz = novoNo;
+		printf("Este é o nó raiz. \n");
+		return;
+	}
+	
+	while(corrente){
+		pai = corrente;
+		if(novoNo->dado <= corrente->dado){
+			corrente = corrente->esq;
+			if(!corrente){
+				printf("No inserido � esquerda do no %d. \n", pai->dado);
+				pai->esq = novoNo;
+				return;
+			}
+		}
+		else{
+			corrente = corrente->dir;
+			if(!corrente){
+				printf("No inserido � direita do no %d. \n", pai->dado);
+				pai->dir = novoNo;
+				return;
 			}
 		}
 	}
-	else {
-		return (0);
-	}
 }
 
-//Inserir n�
-void arvore_insere(int pai, char dado, int lado){
-	switch (lado){
-		case E:
-			arvore[pai].esquerda = indice;
-			arvore[indice].dado = dado;
-			arvore[indice].pai = pai;
-			arvore[indice].esquerda = -1;
-			arvore[indice].direita = -1;
-			indice++;
-			break;
-		case D:
-			arvore[pai].direita = indice;
-			arvore[indice].dado = dado;
-			arvore[indice].pai = pai;
-			arvore[indice].esquerda = -1;
-			arvore[indice].direita = -1;
-			indice++;
-			break;
-		case R:
-			arvore[indice].dado = dado;
-			arvore[indice].pai = -1;
-			arvore[indice].esquerda = -1;
-			arvore[indice].direita = -1;
-			indice++;
-			break; 
-	}
-}
-
-//Fun��o principal
-int main(void){
-	int temp;
-	do {
-	menu_mostrar();
-	scanf("%d", &opt);
-	fflush(stdin);
-		switch (opt){
-			case 1:
-				printf("\nDigite o valor do PAI: ");
-				scanf("%c",&pai);
-				fflush(stdin);
-				//scanf("%c",&pai);
-				printf("Digite o valor do NO: ");
-				scanf("%c",&no);
-				fflush(stdin);
-				//scanf("%c",&no);
-				printf("Digite o lado da subarvore (E=%d/D=%d/R=%d): ", E,D,R);
-				scanf("%d",&lado);
-				fflush(stdin);
-				temp = arvore_procura(pai);
-				arvore_insere(temp,no,lado); //Função de inserção dos nós
-				break;
-			case 2:
-				printf("Digite o valor do NO: ");
-				scanf("%c",&no);
-				fflush(stdin);
-				//scanf("%c",&no);
-				temp = arvore_procura(no);
-				printf("No %c\nFilho Esquerda: %c \nFilho	Direita: %c\n\n", arvore[temp].dado, arvore[arvore[temp].esquerda].dado, arvore[arvore[temp].direita].dado);
-				system("pause"); break; 
-		}
-	}while (opt!=0);
-	system("pause");
-	return(0);
-}
-
-//Desenha o menu na tela
-void menu_mostrar(void){
-	int i;
-	system("cls");
-	for (i = 0; i < indice; i++){
-		printf("| %c ",arvore[i].dado);
-	}
-	printf("\n1 - Inserir um NO na arvore");
-	printf("\n2 - Pesquisar um NO na arvore");
-	printf("\n0 - Sair...\n\n");
-}
-
-void caminhamentoEmOrdem(indiceRaiz){
-	if (raiz){
-		emOrdem( raiz->esq);
-		printf("%d \t", raiz -> dado); //marca o nó como visitado
+//Executa o caminhamento em-ordem a partir do n� indicado por "raiz"
+void emOrdem(NO* raiz){
+	if(raiz){
+		emOrdem(raiz->esq);
+		printf("%d \t", raiz->dado);
 		emOrdem(raiz->dir);
 	}
 }
+
+
+
+int main()
+{
+	inicializaArvore(a);
+	
+	insereNoArvoreOrdenada(1);
+	insereNoArvoreOrdenada(8);
+	insereNoArvoreOrdenada(0);
+	insereNoArvoreOrdenada(8);
+	insereNoArvoreOrdenada(8);
+	insereNoArvoreOrdenada(3);
+  insereNoArvoreOrdenada(8);
+	insereNoArvoreOrdenada(5);
+	
+	printf("\nBusca em ordem: \n");
+	emOrdem(a.raiz);
+	
+}
+
